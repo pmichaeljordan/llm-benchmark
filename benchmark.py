@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 from typing import List
 
@@ -77,7 +78,8 @@ def run_benchmark(
     # with open("data/ollama/ollama_res.json", "w") as outfile:
     #     outfile.write(json.dumps(last_element, indent=4))
 
-    return OllamaResponse.model_validate(last_element)
+    #return OllamaResponse.model_validate(last_element)
+    return OllamaResponse.model_validate(last_element.model_dump())
 
 
 def nanosec_to_sec(nanosec):
@@ -146,11 +148,13 @@ def average_stats(responses: List[OllamaResponse]):
 
 def get_benchmark_models(skip_models: List[str] = []) -> List[str]:
     models = ollama.list().get("models", [])
-    model_names = [model["name"] for model in models]
-    if len(skip_models) > 0:
-        model_names = [
-            model for model in model_names if model not in skip_models
-        ]
+    # If each item is a pydantic model with a "model" attribute:
+    model_names = [m.model for m in models]   # extract string from the object
+
+    # Filter out skip_models if needed
+    if skip_models:
+        model_names = [m for m in model_names if m not in skip_models]
+    
     print(f"Evaluating models: {model_names}\n")
     return model_names
 
